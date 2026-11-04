@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Bramble</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_calendar">Calendar</string>
+    <string name="tab_store">Store</string>
+    <string name="tab_account">Account</string>
+</resources>
