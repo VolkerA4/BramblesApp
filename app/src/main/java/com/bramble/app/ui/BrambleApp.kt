@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -15,15 +16,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.bramble.app.R
 import com.bramble.app.ui.screens.AccountScreen
 import com.bramble.app.ui.screens.CalendarScreen
 import com.bramble.app.ui.screens.HomeScreen
+import com.bramble.app.ui.screens.SettingsScreen
 import com.bramble.app.ui.screens.StoreScreen
+import com.bramble.app.ui.theme.BrambleNavBarGreen
 import com.bramble.app.ui.theme.BrambleTheme
 
 /** The four bottom-bar destinations, in display order. */
@@ -38,14 +43,18 @@ enum class Tab(@StringRes val label: Int, @DrawableRes val icon: Int) {
 fun BrambleApp() {
     // rememberSaveable keeps the selected tab across screen rotation and process death.
     var currentTab by rememberSaveable { mutableStateOf(Tab.Home) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(containerColor = BrambleNavBarGreen) {
                 Tab.entries.forEach { tab ->
                     NavigationBarItem(
                         selected = tab == currentTab,
-                        onClick = { currentTab = tab },
+                        onClick = {
+                            currentTab = tab
+                            showSettings = false
+                        },
                         icon = { Icon(painterResource(tab.icon), contentDescription = null) },
                         label = { Text(stringResource(tab.label)) },
                     )
@@ -54,11 +63,22 @@ fun BrambleApp() {
         }
     ) { innerPadding ->
         Box(Modifier.fillMaxSize().padding(innerPadding)) {
-            when (currentTab) {
-                Tab.Home -> HomeScreen()
-                Tab.Calendar -> CalendarScreen()
-                Tab.Store -> StoreScreen()
-                Tab.Account -> AccountScreen()
+            if (showSettings) {
+                SettingsScreen(onBack = { showSettings = false })
+            } else {
+                when (currentTab) {
+                    Tab.Home -> HomeScreen()
+                    Tab.Calendar -> CalendarScreen()
+                    Tab.Store -> StoreScreen()
+                    Tab.Account -> AccountScreen()
+                }
+                // Menu button sits in the top-left corner of every tab and opens settings.
+                IconButton(
+                    onClick = { showSettings = true },
+                    modifier = Modifier.align(Alignment.TopStart).padding(4.dp),
+                ) {
+                    Icon(painterResource(R.drawable.ic_menu), contentDescription = stringResource(R.string.settings))
+                }
             }
         }
     }

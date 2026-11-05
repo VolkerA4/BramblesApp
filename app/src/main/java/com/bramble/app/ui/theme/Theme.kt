@@ -1,7 +1,6 @@
 package com.bramble.app.ui.theme
 
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -11,10 +10,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+val BrambleGreen = Color(0xFFA3BB6E)
+val BrambleNavBarGreen = Color(0xFFC7E487)
+
 // Bramble greens and berry purples. Used when the device doesn't supply wallpaper-based colors.
 private val LightColors = lightColorScheme(
     primary = Color(0xFF3B6939),
     secondary = Color(0xFF6D4C7D),
+    background = BrambleGreen,
 )
 
 private val DarkColors = darkColorScheme(
@@ -24,7 +27,8 @@ private val DarkColors = darkColorScheme(
 
 @Composable
 fun BrambleTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    // Light only for now: the green background needs dark text. Pass isSystemInDarkTheme() to re-enable dark mode.
+    darkTheme: Boolean = false,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
