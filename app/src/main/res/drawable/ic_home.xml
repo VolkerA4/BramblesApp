@@ -1,9 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rounded outline icon, 2dp stroke. Tinted at runtime by Icon(). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:fillColor="#FF000000"
-        android:pathData="M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z" />
+        android:pathData="M3,10.5 C3,9.9 3.27,9.33 3.73,8.95 L10.73,3.06 C11.47,2.44 12.53,2.44 13.27,3.06 L20.27,8.95 C20.73,9.33 21,9.9 21,10.5 V18 C21,19.66 19.66,21 18,21 H6 C4.34,21 3,19.66 3,18 Z"
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M9.5,21 V15.5 C9.5,14.12 10.62,13 12,13 C13.38,13 14.5,14.12 14.5,15.5 V21"
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
 </vector>

@@ -47,4 +47,31 @@
     <string name="default_task_drink_water">Drink Water</string>
     <string name="checklist_delete">Delete task</string>
     <string name="checklist_delete_all_days">Delete from every day</string>
+    <!--  Spoons, mood and difficulty  -->
+    <string name="difficulty_easy">Easy</string>
+    <string name="difficulty_med">Med</string>
+    <string name="difficulty_hard">Hard</string>
+    <string name="task_spoon_cost">How much energy will it take?</string>
+    <string name="spoons_label">spoons</string>
+    <string name="dialog_not_now">Not now</string>
+    <string name="mood_button">Check in</string>
+    <string name="mood_title">How are you feeling?</string>
+    <string name="mood_subtitle">Tap the face that fits right now. There\'s no wrong answer.</string>
+    <string name="mood_subtitle_over">This one is more than you have left today. How are you feeling right now?</string>
+    <string name="budget_title">Spoons for today</string>
+    <string name="budget_today">Save for today</string>
+    <string name="budget_every_day">Use this every day</string>
+    <string name="add_spoons_title">A bit more than you have left</string>
+    <string name="add_spoons_message">Since you\'re feeling okay, you can add %1$d spoons to today.</string>
+    <string name="add_spoons_confirm">Add %1$d spoons</string>
+    <string name="borrow_title">Borrow from tomorrow?</string>
+    <string name="borrow_message">You\'re out of spoons for this one. Borrowing takes %1$d spoons from the days ahead, a little extra since it\'s energy you don\'t have yet. It\'s also okay to leave it for later.</string>
+    <string name="borrow_confirm">Borrow</string>
+    <string name="pacing_title">You did a lot yesterday</string>
+    <string name="pacing_message">Want to plan a lighter day today? Resting counts too.</string>
+    <string name="pacing_ok">Okay</string>
+    <string name="take_it_easy_banner">Take-it-easy day. Resting counts.</string>
+    <string name="take_it_easy_add_note">Today\'s a take-it-easy day. You can add this for another day instead.</string>
+    <string name="appearance_title">Appearance</string>
+    <string name="dark_mode">Dark mode</string>
 </resources>

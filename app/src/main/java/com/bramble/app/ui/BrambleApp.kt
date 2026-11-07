@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +30,6 @@ import com.bramble.app.ui.screens.CalendarScreen
 import com.bramble.app.ui.screens.HomeScreen
 import com.bramble.app.ui.screens.SettingsScreen
 import com.bramble.app.ui.screens.StoreScreen
-import com.bramble.app.ui.theme.BrambleNavBarGreen
 import com.bramble.app.ui.theme.BrambleTheme
 
 /** The four bottom-bar destinations, in display order. */
@@ -47,7 +48,8 @@ fun BrambleApp() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar(containerColor = BrambleNavBarGreen) {
+            // Sage bar with a lavender selection pill (light) / deep green bar with a purple pill (dark).
+            NavigationBar(containerColor = MaterialTheme.colorScheme.primaryContainer) {
                 Tab.entries.forEach { tab ->
                     NavigationBarItem(
                         selected = tab == currentTab,
@@ -57,6 +59,13 @@ fun BrambleApp() {
                         },
                         icon = { Icon(painterResource(tab.icon), contentDescription = null) },
                         label = { Text(stringResource(tab.label)) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            unselectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ),
                     )
                 }
             }
@@ -77,7 +86,11 @@ fun BrambleApp() {
                     onClick = { showSettings = true },
                     modifier = Modifier.align(Alignment.TopStart).padding(4.dp),
                 ) {
-                    Icon(painterResource(R.drawable.ic_menu), contentDescription = stringResource(R.string.settings))
+                    Icon(
+                        painterResource(R.drawable.ic_menu),
+                        contentDescription = stringResource(R.string.settings),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
         }

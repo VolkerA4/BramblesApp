@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bramble.app.R
 import com.bramble.app.data.Backup
 import com.bramble.app.data.BackupData
+import com.bramble.app.data.ThemeSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -57,7 +60,12 @@ fun SettingsScreen(
         ActivityResultContracts.CreateDocument("application/json"),
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
-        val json = Backup.toJson(homeViewModel.items.toList(), accountViewModel.name, accountViewModel.pronouns)
+        val json = Backup.toJson(
+            homeViewModel.items.toList(),
+            accountViewModel.name,
+            accountViewModel.pronouns,
+            homeViewModel.spoonData,
+        )
         scope.launch {
             val saved = withContext(Dispatchers.IO) {
                 runCatching {
@@ -94,7 +102,7 @@ fun SettingsScreen(
             text = { Text(stringResource(R.string.restore_message)) },
             confirmButton = {
                 TextButton(onClick = {
-                    homeViewModel.replaceAll(data.items)
+                    homeViewModel.replaceAll(data.items, data.spoons)
                     accountViewModel.update(
                         data.name ?: accountViewModel.name,
                         data.pronouns ?: accountViewModel.pronouns,
@@ -118,6 +126,22 @@ fun SettingsScreen(
         }
 
         Column(Modifier.padding(16.dp)) {
+            Text(stringResource(R.string.appearance_title), style = MaterialTheme.typography.titleMedium)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 24.dp),
+            ) {
+                Text(
+                    stringResource(R.string.dark_mode),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = ThemeSettings.darkMode ?: isSystemInDarkTheme(),
+                    onCheckedChange = { ThemeSettings.setDarkMode(context, it) },
+                )
+            }
+
             Text(stringResource(R.string.backup_title), style = MaterialTheme.typography.titleMedium)
             Text(
                 stringResource(R.string.backup_description),

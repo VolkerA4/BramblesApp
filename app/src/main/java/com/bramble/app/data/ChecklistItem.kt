@@ -6,6 +6,8 @@ package com.bramble.app.data
  *
  * A normal task appears only on [startDay]. A repeating task appears on [startDay] and every
  * day after it. Completion is tracked per day, so a repeating task starts unchecked each day.
+ *
+ * [spoonCost] is how much energy the task takes: 1 = Easy, 2 = Med, 3 = Hard.
  */
 data class ChecklistItem(
     val id: Long,
@@ -13,6 +15,7 @@ data class ChecklistItem(
     val startDay: Long,
     val repeatDaily: Boolean = false,
     val completedDays: Set<Long> = emptySet(),
+    val spoonCost: Int = MIN_SPOONS,
 ) {
     fun appearsOn(day: Long): Boolean = if (repeatDaily) day >= startDay else day == startDay
 
@@ -20,4 +23,9 @@ data class ChecklistItem(
 
     fun toggledOn(day: Long): ChecklistItem =
         copy(completedDays = if (isDoneOn(day)) completedDays - day else completedDays + day)
+
+    companion object {
+        const val MIN_SPOONS = 1
+        const val MAX_SPOONS = 3
+    }
 }

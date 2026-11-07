@@ -70,6 +70,8 @@ fun CalendarScreen(viewModel: TasksViewModel = viewModel()) {
     val today = remember { LocalDate.now() }
     val thisSunday = remember { today.with(SundayOnOrBefore) }
     val thisMonth = remember { YearMonth.from(today) }
+    // Checking off a task today can ask about spoons first (mood, adding spoons, borrowing).
+    val handleToggle = rememberToggleHandler(viewModel, today.toEpochDay())
 
     // Dates are saved as epoch-day numbers because rememberSaveable can store a Long directly.
     var selectedEpochDay by rememberSaveable { mutableStateOf(today.toEpochDay()) }
@@ -97,8 +99,9 @@ fun CalendarScreen(viewModel: TasksViewModel = viewModel()) {
     if (showAddDialog) {
         AddTaskDialog(
             initialDay = selected.toEpochDay(), // new tasks start on the day you're looking at
-            onAdd = { text, day, repeatDaily ->
-                viewModel.add(text, day, repeatDaily)
+            lockedDay = today.toEpochDay().takeIf { viewModel.isTakeItEasy(it) },
+            onAdd = { text, day, repeatDaily, spoonCost ->
+                viewModel.add(text, day, repeatDaily, spoonCost)
                 showAddDialog = false
             },
             onDismiss = { showAddDialog = false },
@@ -109,7 +112,7 @@ fun CalendarScreen(viewModel: TasksViewModel = viewModel()) {
         Spacer(Modifier.height(56.dp)) // room for the menu button in the corner
 
         Surface(
-            color = Color.White,
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth().animateContentSize(),
         ) {
@@ -217,7 +220,7 @@ fun CalendarScreen(viewModel: TasksViewModel = viewModel()) {
                     ChecklistRow(
                         item = task,
                         day = selectedDay,
-                        onToggle = { viewModel.toggle(task, selectedDay) },
+                        onToggle = { handleToggle(task, selectedDay) },
                         onDelete = { viewModel.remove(task) },
                     )
                 }

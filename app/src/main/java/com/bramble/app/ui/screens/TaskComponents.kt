@@ -1,5 +1,7 @@
 package com.bramble.app.ui.screens
 
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +17,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -47,9 +50,41 @@ import java.time.format.DateTimeFormatter
 
 private const val MILLIS_PER_DAY = 86_400_000L
 
+private val MedColor = Color(0xFFC8963E) // warm amber; red is avoided because it reads as an alarm
+
+@StringRes
+private fun difficultyLabel(spoonCost: Int): Int = when (spoonCost) {
+    1 -> R.string.difficulty_easy
+    2 -> R.string.difficulty_med
+    else -> R.string.difficulty_hard
+}
+
+/** Small pill showing how much energy a task takes: Easy (1 spoon), Med (2), Hard (3). */
+@Composable
+fun DifficultyTag(spoonCost: Int, modifier: Modifier = Modifier) {
+    val color = when (spoonCost) {
+        1 -> MaterialTheme.colorScheme.primary
+        2 -> MedColor
+        else -> MaterialTheme.colorScheme.secondary
+    }
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(50),
+        color = color.copy(alpha = 0.15f),
+        contentColor = color,
+    ) {
+        Text(
+            stringResource(difficultyLabel(spoonCost)),
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+        )
+    }
+}
+
 /**
  * A white rounded card for one task, checked or unchecked for the given [day].
  * The checkbox toggles it; tapping anywhere else on the card opens a menu of actions.
+ * The Easy/Med/Hard tag sits at the end of the card.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +95,7 @@ fun ChecklistRow(item: ChecklistItem, day: Long, onToggle: () -> Unit, onDelete:
     Box {
         Surface(
             onClick = { menuOpen = true },
-            color = Color.White,
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -81,6 +116,7 @@ fun ChecklistRow(item: ChecklistItem, day: Long, onToggle: () -> Unit, onDelete:
                         )
                     }
                 }
+                DifficultyTag(item.spoonCost, Modifier.padding(start = 8.dp))
             }
         }
 
@@ -109,15 +145,29 @@ fun dayLabel(day: Long, today: Long): String = when (day - today) {
     else -> LocalDate.ofEpochDay(day).format(DateTimeFormatter.ofPattern("EEEE, MMM d"))
 }
 
+/**
+ * @param lockedDay a day that can't take new tasks (today, after the lowest mood was logged), or null.
+ *   Choosing that day shows a kind note and disables Add; other dates still work.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddTaskDialog(initialDay: Long, onAdd: (text: String, day: Long, repeatDaily: Boolean) -> Unit, onDismiss: () -> Unit) {
+fun AddTaskDialog(
+    initialDay: Long,
+    onAdd: (text: String, day: Long, repeatDaily: Boolean, spoonCost: Int) -> Unit,
+    onDismiss: () -> Unit,
+    lockedDay: Long? = null,
+) {
     var text by rememberSaveable { mutableStateOf("") }
-    var day by rememberSaveable { mutableStateOf(initialDay) }
+    // Start on tomorrow instead if the day being looked at is closed to new tasks.
+    var day by rememberSaveable { mutableStateOf(if (initialDay == lockedDay) initialDay + 1 else initialDay) }
     var repeatDaily by rememberSaveable { mutableStateOf(false) }
+    var spoonCost by rememberSaveable { mutableStateOf(ChecklistItem.MIN_SPOONS) }
     var showPicker by rememberSaveable { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+    val blocked = day == lockedDay
+    val canAdd = text.isNotBlank() && !blocked
 
     if (showPicker) {
         // The date picker works in UTC milliseconds, which map straight onto epoch days.
@@ -149,14 +199,36 @@ fun AddTaskDialog(initialDay: Long, onAdd: (text: String, day: Long, repeatDaily
                     label = { Text(stringResource(R.string.checklist_add_hint)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { if (text.isNotBlank()) onAdd(text, day, repeatDaily) }),
+                    keyboardActions = KeyboardActions(onDone = { if (canAdd) onAdd(text, day, repeatDaily, spoonCost) }),
                     modifier = Modifier.focusRequester(focusRequester),
                 )
+                Text(
+                    stringResource(R.string.task_spoon_cost),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for (cost in ChecklistItem.MIN_SPOONS..ChecklistItem.MAX_SPOONS) {
+                        FilterChip(
+                            selected = spoonCost == cost,
+                            onClick = { spoonCost = cost },
+                            label = { Text(stringResource(difficultyLabel(cost))) },
+                        )
+                    }
+                }
                 OutlinedButton(
                     onClick = { showPicker = true },
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 ) {
                     Text(LocalDate.ofEpochDay(day).format(DateTimeFormatter.ofPattern("EEE, MMM d, yyyy")))
+                }
+                if (blocked) {
+                    Text(
+                        stringResource(R.string.take_it_easy_add_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = repeatDaily, onCheckedChange = { repeatDaily = it })
@@ -165,7 +237,7 @@ fun AddTaskDialog(initialDay: Long, onAdd: (text: String, day: Long, repeatDaily
             }
         },
         confirmButton = {
-            TextButton(onClick = { onAdd(text, day, repeatDaily) }, enabled = text.isNotBlank()) {
+            TextButton(onClick = { onAdd(text, day, repeatDaily, spoonCost) }, enabled = canAdd) {
                 Text(stringResource(R.string.checklist_add))
             }
         },

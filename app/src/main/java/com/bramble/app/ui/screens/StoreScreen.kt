@@ -34,7 +34,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bramble.app.R
 
-private val FrameColor = Color(0xFF2F233E)
 
 @Composable
 fun StoreScreen() {
@@ -69,17 +68,18 @@ fun StoreScreen() {
 /** A product in a double picture-frame border with a diamond ornament on each corner. */
 @Composable
 private fun StoreItemCard(image: Int, name: String, price: String, onBuy: () -> Unit) {
+    val frameColor = MaterialTheme.colorScheme.secondary
     Surface(
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(4.dp, FrameColor),
+        border = BorderStroke(4.dp, frameColor),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .padding(8.dp)
-                .border(1.5.dp, FrameColor, RoundedCornerShape(14.dp))
+                .border(1.5.dp, frameColor, RoundedCornerShape(14.dp))
                 .drawBehind {
                     val r = 7.dp.toPx()
                     listOf(
@@ -95,7 +95,7 @@ private fun StoreItemCard(image: Int, name: String, price: String, onBuy: () -> 
                             lineTo(c.x - r, c.y)
                             close()
                         }
-                        drawPath(diamond, FrameColor)
+                        drawPath(diamond, frameColor)
                     }
                 }
                 .padding(20.dp),
@@ -110,7 +110,7 @@ private fun StoreItemCard(image: Int, name: String, price: String, onBuy: () -> 
                 name,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = FrameColor,
+                color = frameColor,
                 modifier = Modifier.padding(top = 12.dp),
             )
             Text(price, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 4.dp))

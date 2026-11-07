@@ -82,7 +82,7 @@ fun AccountScreen(viewModel: AccountViewModel = viewModel()) {
 @Composable
 private fun IdCard(name: String, pronouns: String, onEdit: () -> Unit) {
     Surface(
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {

@@ -41,7 +41,8 @@ class ChecklistRepository(context: Context) {
                         .put("text", it.text)
                         .put("startDay", it.startDay)
                         .put("repeatDaily", it.repeatDaily)
-                        .put("completedDays", JSONArray(it.completedDays.sorted())),
+                        .put("completedDays", JSONArray(it.completedDays.sorted()))
+                        .put("spoonCost", it.spoonCost),
                 )
             }
             return array
@@ -50,6 +51,7 @@ class ChecklistRepository(context: Context) {
         /**
          * Throws if an entry is malformed. Repeated ids are dropped since the list UI needs unique ids.
          * Entries from before tasks had dates (just "done") become tasks for today.
+         * Entries from before tasks had spoons cost 1 (Easy): borrowed energy is still energy spent.
          */
         fun fromJson(array: JSONArray): List<ChecklistItem> {
             val today = LocalDate.now().toEpochDay()
@@ -70,8 +72,11 @@ class ChecklistRepository(context: Context) {
                     startDay = startDay,
                     repeatDaily = o.optBoolean("repeatDaily", false),
                     completedDays = completed,
+                    spoonCost = o.optInt("spoonCost", ChecklistItem.MIN_SPOONS)
+                        .coerceIn(ChecklistItem.MIN_SPOONS, ChecklistItem.MAX_SPOONS),
                 )
             }.distinctBy { it.id }
         }
     }
 }
+

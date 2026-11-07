@@ -11,10 +11,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +28,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -35,17 +42,63 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
+    var showMoodDialog by rememberSaveable { mutableStateOf(false) }
+    var showBudgetDialog by rememberSaveable { mutableStateOf(false) }
     val today = LocalDate.now()
     val todayDay = today.toEpochDay()
+    val handleToggle = rememberToggleHandler(viewModel, todayDay)
+
+    val summary = viewModel.summary(todayDay)
+    val takeItEasy = viewModel.isTakeItEasy(todayDay)
 
     if (showAddDialog) {
         AddTaskDialog(
             initialDay = todayDay,
-            onAdd = { text, day, repeatDaily ->
-                viewModel.add(text, day, repeatDaily)
+            lockedDay = todayDay.takeIf { takeItEasy },
+            onAdd = { text, day, repeatDaily, spoonCost ->
+                viewModel.add(text, day, repeatDaily, spoonCost)
                 showAddDialog = false
             },
             onDismiss = { showAddDialog = false },
+        )
+    }
+
+    if (showMoodDialog) {
+        MoodDialog(
+            onPick = { mood ->
+                viewModel.logMood(todayDay, mood)
+                showMoodDialog = false
+            },
+            onDismiss = { showMoodDialog = false },
+        )
+    }
+
+    if (showBudgetDialog) {
+        BudgetDialog(
+            current = viewModel.record(todayDay).baseBudget,
+            onSaveToday = {
+                viewModel.setBudget(todayDay, it)
+                showBudgetDialog = false
+            },
+            onSaveEveryDay = {
+                viewModel.setUsualBudget(it)
+                viewModel.setBudget(todayDay, it)
+                showBudgetDialog = false
+            },
+            onDismiss = { showBudgetDialog = false },
+        )
+    }
+
+    // The day after extra spoons were added: a gentle, optional note, shown once.
+    val showPacingNote = viewModel.addedExtraOn(todayDay - 1) && !viewModel.record(todayDay).pacingNoteSeen
+    if (showPacingNote) {
+        AlertDialog(
+            onDismissRequest = { viewModel.markPacingNoteSeen(todayDay) },
+            title = { Text(stringResource(R.string.pacing_title)) },
+            text = { Text(stringResource(R.string.pacing_message)) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.markPacingNoteSeen(todayDay) }) { Text(stringResource(R.string.pacing_ok)) }
+            },
         )
     }
 
@@ -67,9 +120,15 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
                     Text(
                         today.format(DateTimeFormatter.ofPattern("EEEE, MMMM d")),
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f), // pushes the icon to the right edge
+                        modifier = Modifier.weight(1f), // pushes the counter to the right edge
                     )
-                    Icon(painterResource(R.drawable.ic_square), contentDescription = null)
+                    SpoonCounter(left = summary.left, budget = summary.budget, onClick = { showBudgetDialog = true })
+                }
+                if (takeItEasy) {
+                    Text(
+                        stringResource(R.string.take_it_easy_banner),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
 
                 // The list takes all spare room so the button stays pinned under it.
@@ -93,7 +152,7 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
                             ChecklistRow(
                                 item = task,
                                 day = day,
-                                onToggle = { viewModel.toggle(task, day) },
+                                onToggle = { handleToggle(task, day) },
                                 onDelete = { viewModel.remove(task) },
                             )
                         }
@@ -109,12 +168,29 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
             }
         }
 
-        // Top-right corner, mirroring the menu button on the left.
-        Icon(
-            painter = painterResource(R.drawable.ic_smiley),
-            contentDescription = null,
-            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
-        )
+        // Top-right corner, mirroring the menu button on the left. Opens the mood check-in.
+        IconButton(
+            onClick = { showMoodDialog = true },
+            modifier = Modifier.align(Alignment.TopEnd).padding(4.dp),
+        ) {
+            Icon(painterResource(R.drawable.ic_smiley), contentDescription = stringResource(R.string.mood_button))
+        }
+    }
+}
+
+/** "9 / 12 spoons": what's left today out of today's budget. Tap to change the budget. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SpoonCounter(left: Int, budget: Int, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.7f),
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
+            Text("${left.coerceAtLeast(0)} / $budget", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.spoons_label), style = MaterialTheme.typography.labelSmall)
+        }
     }
 }
 
