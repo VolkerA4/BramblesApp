@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,10 +35,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bramble.app.R
-import com.bramble.app.data.TaskSuggestions
+import com.bramble.app.ui.theme.BrambleDialog
 import com.bramble.app.data.ChecklistItem
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
+/** How much of the top-half box the Home raccoon fills (1f = all of it). Lower = smaller raccoon. */
+private const val MascotScale = 0.8f
+
+/** Height of the spoons tin picture next to the counter; the width follows the picture's shape. */
+private val SpoonTinHeight = 48.dp
 
 @Composable
 fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
@@ -53,16 +59,7 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
     val takeItEasy = viewModel.isTakeItEasy(todayDay)
 
     if (showAddDialog) {
-        AddTaskDialog(
-            initialDay = todayDay,
-            lockedDay = todayDay.takeIf { takeItEasy },
-            onAdd = { text, day, repeatDaily, spoonCost ->
-                viewModel.add(text, day, repeatDaily, spoonCost)
-                showAddDialog = false
-            },
-            onDismiss = { showAddDialog = false },
-            suggestions = TaskSuggestions,
-        )
+        AddTaskFlow(viewModel, initialDay = todayDay, onClose = { showAddDialog = false })
     }
 
     if (showMoodDialog) {
@@ -94,7 +91,7 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
     // The day after extra spoons were added: a gentle, optional note, shown once.
     val showPacingNote = viewModel.addedExtraOn(todayDay - 1) && !viewModel.record(todayDay).pacingNoteSeen
     if (showPacingNote) {
-        AlertDialog(
+        BrambleDialog(
             onDismissRequest = { viewModel.markPacingNoteSeen(todayDay) },
             title = { Text(stringResource(R.string.pacing_title)) },
             text = { Text(stringResource(R.string.pacing_message)) },
@@ -105,7 +102,7 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
     }
 
     // Home only shows today: tasks dated today plus repeating tasks. Other days live on the Calendar tab.
-    val todaysTasks = viewModel.items.filter { it.appearsOn(todayDay) }.sortedBy { it.isDoneOn(todayDay) } // done tasks sink to the bottom
+    val todaysTasks = viewModel.items.filter { it.appearsOn(todayDay) }.sortedForDay(todayDay) // priority, then daily, then standard; done tasks at the bottom
 
     Box(Modifier.fillMaxSize()) {
         // The whole page is one scrolling list. The menu button (in BrambleApp) and the mood
@@ -117,12 +114,15 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
         ) {
             // The mascot fills the top half of the screen before you scroll. Fit scales it without cropping.
             item {
-                Image(
-                    painter = painterResource(mascotFor(todaysTasks, todayDay)),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxWidth().fillParentMaxHeight(0.5f).padding(vertical = 8.dp),
-                )
+                // The box keeps the top half of the screen; the raccoon fills MascotScale of it, centered.
+                Box(Modifier.fillMaxWidth().fillParentMaxHeight(0.5f).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                    Image(
+                        painter = painterResource(mascotFor(todaysTasks, todayDay)),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize(MascotScale),
+                    )
+                }
             }
 
             item {
@@ -130,7 +130,14 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
                     Text(
                         today.format(DateTimeFormatter.ofPattern("EEEE, MMMM d")),
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f), // pushes the counter to the right edge
+                        modifier = Modifier.weight(1f), // pushes the tin and counter to the right edge
+                    )
+                    // The spoons tin sits just left of the counter; the counter's text already says what it is.
+                    Image(
+                        painter = painterResource(R.drawable.spoons_tin),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.height(SpoonTinHeight).padding(end = 8.dp),
                     )
                     SpoonCounter(left = summary.left, budget = summary.budget, onClick = { showBudgetDialog = true })
                 }
@@ -145,12 +152,7 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
             }
 
             items(todaysTasks, key = { it.id }) { task ->
-                ChecklistRow(
-                    item = task,
-                    day = todayDay,
-                    onToggle = { handleToggle(task, todayDay) },
-                    onDelete = { viewModel.remove(task) },
-                )
+                TaskItem(item = task, day = todayDay, viewModel = viewModel, onToggle = { handleToggle(task, todayDay) })
             }
 
             item {

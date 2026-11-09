@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
 import com.bramble.app.data.ThemeSettings
 import com.bramble.app.ui.BrambleApp
@@ -19,8 +18,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         // Instead of inflating an XML layout, Compose builds the UI from @Composable functions.
         setContent {
-            // The Settings switch wins; until it's used, follow the phone's setting.
-            val darkTheme = ThemeSettings.darkMode ?: isSystemInDarkTheme()
+            // Light unless the Settings switch has been turned on; the phone's own dark mode is ignored.
+            val darkTheme = ThemeSettings.darkMode ?: false
 
             // Keep the status/navigation bar icons readable when the app's theme differs from the phone's.
             DisposableEffect(darkTheme) {

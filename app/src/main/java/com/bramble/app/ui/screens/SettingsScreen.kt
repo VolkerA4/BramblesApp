@@ -4,13 +4,12 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bramble.app.R
+import com.bramble.app.ui.theme.BrambleDialog
 import com.bramble.app.data.Backup
 import com.bramble.app.data.BackupData
 import com.bramble.app.data.ThemeSettings
@@ -96,7 +96,7 @@ fun SettingsScreen(
     }
 
     pendingRestore?.let { data ->
-        AlertDialog(
+        BrambleDialog(
             onDismissRequest = { pendingRestore = null },
             title = { Text(stringResource(R.string.restore_title)) },
             text = { Text(stringResource(R.string.restore_message)) },
@@ -137,7 +137,7 @@ fun SettingsScreen(
                     modifier = Modifier.weight(1f),
                 )
                 Switch(
-                    checked = ThemeSettings.darkMode ?: isSystemInDarkTheme(),
+                    checked = ThemeSettings.darkMode ?: false,
                     onCheckedChange = { ThemeSettings.setDarkMode(context, it) },
                 )
             }
@@ -150,10 +150,12 @@ fun SettingsScreen(
             )
             Button(
                 onClick = { exportLauncher.launch("bramble-backup.json") },
+                shape = RoundedCornerShape(12.dp), // matches the task cards
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.backup_export)) }
             OutlinedButton(
                 onClick = { importLauncher.launch(arrayOf("*/*")) },
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             ) { Text(stringResource(R.string.backup_import)) }
 

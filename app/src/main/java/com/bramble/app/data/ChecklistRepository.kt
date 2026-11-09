@@ -42,7 +42,9 @@ class ChecklistRepository(context: Context) {
                         .put("startDay", it.startDay)
                         .put("repeatDaily", it.repeatDaily)
                         .put("completedDays", JSONArray(it.completedDays.sorted()))
-                        .put("spoonCost", it.spoonCost),
+                        .put("spoonCost", it.spoonCost)
+                        .put("priority", it.priority)
+                        .put("skippedDays", JSONArray(it.skippedDays.sorted())),
                 )
             }
             return array
@@ -74,6 +76,11 @@ class ChecklistRepository(context: Context) {
                     completedDays = completed,
                     spoonCost = o.optInt("spoonCost", ChecklistItem.MIN_SPOONS)
                         .coerceIn(ChecklistItem.MIN_SPOONS, ChecklistItem.MAX_SPOONS),
+                    priority = o.optBoolean("priority", false), // older saves and backups have none
+                    skippedDays = buildSet {
+                        val skipped = o.optJSONArray("skippedDays")
+                        if (skipped != null) for (d in 0 until skipped.length()) add(skipped.getLong(d))
+                    },
                 )
             }.distinctBy { it.id }
         }

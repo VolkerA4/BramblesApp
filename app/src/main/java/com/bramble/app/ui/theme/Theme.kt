@@ -1,7 +1,6 @@
 package com.bramble.app.ui.theme
 
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -83,7 +82,7 @@ private val DarkColors = darkColorScheme(
 
 @Composable
 fun BrambleTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
@@ -96,5 +95,5 @@ fun BrambleTheme(
         else -> LightColors
     }
 
-    MaterialTheme(colorScheme = colorScheme, content = content)
+    MaterialTheme(colorScheme = colorScheme, typography = BrambleTypography, shapes = BrambleShapes, content = content)
 }

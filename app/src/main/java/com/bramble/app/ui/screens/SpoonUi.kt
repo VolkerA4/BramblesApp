@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -26,11 +25,40 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bramble.app.R
+import com.bramble.app.ui.theme.AmethystSmoke
+import com.bramble.app.ui.theme.BrambleDialog
+import com.bramble.app.ui.theme.LavenderVeil
+import com.bramble.app.ui.theme.MidnightViolet
+import com.bramble.app.ui.theme.SageGreen
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import com.bramble.app.data.ChecklistItem
 import com.bramble.app.data.CompletionCheck
 import com.bramble.app.data.Spoons
 
-private val MoodFaces = listOf(">:((", ":(", ":/", ":)", ":))") // moods 1..5
+internal val MoodFaces = listOf(">:((", ":(", ":/", ":)", ":))") // moods 1..5, left to right
+
+// Colors behind the faces. Purple is Amethyst Smoke, lightened a little so the dark face text stays
+// readable; yellow is the one color outside the palette.
+private val MoodPurple = lerp(AmethystSmoke, LavenderVeil, 0.25f)
+private val MoodYellow = Color(0xFFF2D98A)
+private val MoodGreen = SageGreen
+
+// The five box colors, one per mood: the three colors plus the midpoint between each neighboring pair.
+internal val MoodColors = listOf(
+    MoodPurple,
+    lerp(MoodPurple, MoodYellow, 0.25f),
+    MoodYellow,
+    lerp(MoodYellow, MoodGreen, 0.5f),
+    MoodGreen,
+)
+
+/** The color for an average mood between 1 and 5, blended smoothly between the five box colors. */
+internal fun moodColorFor(average: Float): Color {
+    val position = (average - 1f).coerceIn(0f, 4f)
+    val lower = position.toInt().coerceAtMost(MoodColors.lastIndex - 1)
+    return lerp(MoodColors[lower], MoodColors[lower + 1], position - lower)
+}
 
 /** One-tap mood picker. Calls [onPick] with 1 (>:(() to 5 (:))). */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,12 +68,13 @@ fun MoodDialog(
     onDismiss: () -> Unit,
     @StringRes subtitle: Int = R.string.mood_subtitle,
 ) {
-    AlertDialog(
+    BrambleDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.mood_title)) },
         text = {
             Column {
                 Text(stringResource(subtitle), style = MaterialTheme.typography.bodyMedium)
+                // One colored box per face, stepping from purple (low mood) through yellow to green (good mood).
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
@@ -54,7 +83,8 @@ fun MoodDialog(
                         Surface(
                             onClick = { onPick(index + 1) },
                             shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            color = MoodColors[index],
+                            contentColor = MidnightViolet, // dark text on the pastel colors, in light and dark mode
                             modifier = Modifier.weight(1f),
                         ) {
                             Text(
@@ -82,7 +112,7 @@ fun BudgetDialog(
     onDismiss: () -> Unit,
 ) {
     var value by rememberSaveable { mutableStateOf(current) }
-    AlertDialog(
+    BrambleDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.budget_title)) },
         text = {
@@ -145,7 +175,7 @@ fun rememberToggleHandler(viewModel: TasksViewModel, today: Long): (ChecklistIte
             onDismiss = { pending = null },
         )
 
-        is Pending.AddSpoons -> AlertDialog(
+        is Pending.AddSpoons -> BrambleDialog(
             onDismissRequest = { pending = null },
             title = { Text(stringResource(R.string.add_spoons_title)) },
             text = { Text(stringResource(R.string.add_spoons_message, p.step)) },
@@ -159,7 +189,7 @@ fun rememberToggleHandler(viewModel: TasksViewModel, today: Long): (ChecklistIte
             dismissButton = { TextButton(onClick = { pending = null }) { Text(stringResource(R.string.dialog_not_now)) } },
         )
 
-        is Pending.Borrow -> AlertDialog(
+        is Pending.Borrow -> BrambleDialog(
             onDismissRequest = { pending = null },
             title = { Text(stringResource(R.string.borrow_title)) },
             text = { Text(stringResource(R.string.borrow_message, p.borrow.payback)) },

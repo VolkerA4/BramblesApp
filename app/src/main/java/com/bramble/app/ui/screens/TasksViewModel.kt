@@ -80,11 +80,16 @@ class TasksViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- Tasks ----
 
-    /** Adds a task. New tasks for a take-it-easy day are refused; other days are fine. */
-    fun add(text: String, day: Long, repeatDaily: Boolean, spoonCost: Int = ChecklistItem.MIN_SPOONS) {
+    /** Adds a task. On a take-it-easy day the screens ask "are you sure?" first (see AddTaskFlow), but it's always allowed. */
+    fun add(
+        text: String,
+        day: Long,
+        repeatDaily: Boolean,
+        spoonCost: Int = ChecklistItem.MIN_SPOONS,
+        priority: Boolean = false,
+    ) {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return
-        if (day == LocalDate.now().toEpochDay() && isTakeItEasy(day)) return
         items.add(
             ChecklistItem(
                 id = System.currentTimeMillis(),
@@ -92,8 +97,54 @@ class TasksViewModel(app: Application) : AndroidViewModel(app) {
                 startDay = day,
                 repeatDaily = repeatDaily,
                 spoonCost = spoonCost.coerceIn(ChecklistItem.MIN_SPOONS, ChecklistItem.MAX_SPOONS),
+                priority = priority,
             ),
         )
+        persist()
+    }
+
+    /**
+     * Skips a (repeating) task for one [day] only; it stays on every other day. If it was already
+     * checked off that day, that is undone, and any energy borrowed for it is given back.
+     */
+    fun skipDay(item: ChecklistItem, day: Long) {
+        val index = items.indexOfFirst { it.id == item.id }
+        if (index < 0) return
+        val old = items[index]
+        items[index] = old.copy(skippedDays = old.skippedDays + day, completedDays = old.completedDays - day)
+        spoonState = spoonState.copy(loans = spoonState.loans.filterNot { it.taskId == item.id && it.borrowDay == day })
+        persist()
+    }
+
+    /**
+     * Saves edits to a task. Moving it to a different date starts it fresh: its done and skipped
+     * days (and any borrowed energy) belonged to the old date, so they're cleared.
+     */
+    fun updateTask(item: ChecklistItem, text: String, day: Long, repeatDaily: Boolean, spoonCost: Int, priority: Boolean) {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return
+        val index = items.indexOfFirst { it.id == item.id }
+        if (index < 0) return
+        val old = items[index]
+        val dateChanged = day != old.startDay
+        items[index] = old.copy(
+            text = trimmed,
+            startDay = day,
+            repeatDaily = repeatDaily,
+            spoonCost = spoonCost.coerceIn(ChecklistItem.MIN_SPOONS, ChecklistItem.MAX_SPOONS),
+            priority = priority,
+            completedDays = if (dateChanged) emptySet() else old.completedDays,
+            skippedDays = if (dateChanged) emptySet() else old.skippedDays,
+        )
+        if (dateChanged) spoonState = spoonState.copy(loans = spoonState.loans.filterNot { it.taskId == item.id })
+        persist()
+    }
+
+    /** Marks or unmarks [item] as a priority task (it applies to every day a repeating task shows on). */
+    fun setPriority(item: ChecklistItem, priority: Boolean) {
+        val index = items.indexOfFirst { it.id == item.id }
+        if (index < 0) return
+        items[index] = items[index].copy(priority = priority)
         persist()
     }
 

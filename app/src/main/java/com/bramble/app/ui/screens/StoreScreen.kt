@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -33,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bramble.app.R
+import com.bramble.app.ui.theme.BrambleDialog
 
 
 @Composable
@@ -41,7 +41,7 @@ fun StoreScreen() {
 
     if (showCheckout) {
         // Placeholder until real payments exist: nothing is charged.
-        AlertDialog(
+        BrambleDialog(
             onDismissRequest = { showCheckout = false },
             title = { Text(stringResource(R.string.store_checkout_title)) },
             text = { Text(stringResource(R.string.store_checkout_message)) },
@@ -114,7 +114,11 @@ private fun StoreItemCard(image: Int, name: String, price: String, onBuy: () -> 
                 modifier = Modifier.padding(top = 12.dp),
             )
             Text(price, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 4.dp))
-            Button(onClick = onBuy, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+            Button(
+                onClick = onBuy,
+                shape = RoundedCornerShape(12.dp), // matches the task cards
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+            ) {
                 Text(stringResource(R.string.store_buy))
             }
         }

@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 /**
- * The user's dark mode choice. null = never chosen, so the app follows the phone's setting.
+ * The user's dark mode choice. null = never chosen, so the app uses light mode (the phone's own setting is ignored).
  * Held in Compose state so flipping the switch in Settings recolors the app right away.
  */
 object ThemeSettings {
