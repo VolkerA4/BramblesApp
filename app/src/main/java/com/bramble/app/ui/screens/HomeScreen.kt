@@ -35,6 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bramble.app.R
+import com.bramble.app.data.TaskSuggestions
+import com.bramble.app.data.ChecklistItem
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -59,6 +61,7 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
                 showAddDialog = false
             },
             onDismiss = { showAddDialog = false },
+            suggestions = TaskSuggestions,
         )
     }
 
@@ -102,7 +105,7 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
     }
 
     // Home only shows today: tasks dated today plus repeating tasks. Other days live on the Calendar tab.
-    val todaysTasks = viewModel.items.filter { it.appearsOn(todayDay) }
+    val todaysTasks = viewModel.items.filter { it.appearsOn(todayDay) }.sortedBy { it.isDoneOn(todayDay) } // done tasks sink to the bottom
 
     Box(Modifier.fillMaxSize()) {
         // The whole page is one scrolling list. The menu button (in BrambleApp) and the mood
@@ -115,7 +118,7 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
             // The mascot fills the top half of the screen before you scroll. Fit scales it without cropping.
             item {
                 Image(
-                    painter = painterResource(R.drawable.raccoon),
+                    painter = painterResource(mascotFor(todaysTasks, todayDay)),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxWidth().fillParentMaxHeight(0.5f).padding(vertical = 8.dp),
@@ -184,5 +187,18 @@ private fun SpoonCounter(left: Int, budget: Int, onClick: () -> Unit) {
             Text("${left.coerceAtLeast(0)} / $budget", style = MaterialTheme.typography.titleMedium)
             Text(stringResource(R.string.spoons_label), style = MaterialTheme.typography.labelSmall)
         }
+    }
+}
+
+/**
+ * Which raccoon to show on Home, based on today's tasks:
+ * all done -> sleepy, at least one done -> working on the laptop, otherwise the default chonk.
+ */
+private fun mascotFor(tasks: List<ChecklistItem>, day: Long): Int {
+    val done = tasks.count { it.isDoneOn(day) }
+    return when {
+        tasks.isNotEmpty() && done == tasks.size -> R.drawable.raccoons_clean_eepy
+        done > 0 -> R.drawable.raccoons_clean_laptop
+        else -> R.drawable.raccoons_clean_chonk
     }
 }

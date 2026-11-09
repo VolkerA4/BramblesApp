@@ -47,6 +47,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bramble.app.R
+import com.bramble.app.data.TaskSuggestions
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -105,6 +106,7 @@ fun CalendarScreen(viewModel: TasksViewModel = viewModel()) {
                 showAddDialog = false
             },
             onDismiss = { showAddDialog = false },
+            suggestions = TaskSuggestions,
         )
     }
 
@@ -204,7 +206,7 @@ fun CalendarScreen(viewModel: TasksViewModel = viewModel()) {
         )
 
         val selectedDay = selected.toEpochDay()
-        val dayTasks = viewModel.items.filter { it.appearsOn(selectedDay) }
+        val dayTasks = viewModel.items.filter { it.appearsOn(selectedDay) }.sortedBy { it.isDoneOn(selectedDay) } // done tasks sink to the bottom
         if (dayTasks.isEmpty()) {
             Text(
                 stringResource(R.string.calendar_no_tasks),

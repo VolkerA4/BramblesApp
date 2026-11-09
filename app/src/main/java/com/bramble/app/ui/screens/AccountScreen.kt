@@ -89,7 +89,7 @@ private fun IdCard(name: String, pronouns: String, onEdit: () -> Unit) {
         Box {
             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    painter = painterResource(R.drawable.raccoon),
+                    painter = painterResource(R.drawable.raccoons_clean_chonk),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.size(96.dp),

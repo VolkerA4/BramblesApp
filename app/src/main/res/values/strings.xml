@@ -48,9 +48,9 @@
     <string name="checklist_delete">Delete task</string>
     <string name="checklist_delete_all_days">Delete from every day</string>
     <!--  Spoons, mood and difficulty  -->
-    <string name="difficulty_easy">I</string>
-    <string name="difficulty_med">II</string>
-    <string name="difficulty_hard">III</string>
+    <string name="difficulty_easy">Easy</string>
+    <string name="difficulty_med">Med</string>
+    <string name="difficulty_hard">Hard</string>
     <string name="task_spoon_cost">How much energy will it take?</string>
     <string name="spoons_label">spoons</string>
     <string name="dialog_not_now">Not now</string>
@@ -74,4 +74,7 @@
     <string name="take_it_easy_add_note">Today\'s a take-it-easy day. You can add this for another day instead.</string>
     <string name="appearance_title">Appearance</string>
     <string name="dark_mode">Dark mode</string>
+    <string name="add_task_close">Close</string>
+    <string name="task_does_not_repeat">Does not repeat</string>
+    <string name="suggestions_title">Suggestions</string>
 </resources>
