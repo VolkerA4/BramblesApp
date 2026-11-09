@@ -83,7 +83,7 @@ fun AccountScreen(viewModel: AccountViewModel = viewModel()) {
 private fun IdCard(name: String, pronouns: String, onEdit: () -> Unit) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Box {

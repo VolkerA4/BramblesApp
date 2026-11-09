@@ -113,7 +113,7 @@ fun CalendarScreen(viewModel: TasksViewModel = viewModel()) {
 
         Surface(
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth().animateContentSize(),
         ) {
             // Switching between week and month builds a fresh pager starting on the same period.
@@ -176,14 +176,15 @@ fun CalendarScreen(viewModel: TasksViewModel = viewModel()) {
                                 Row(Modifier.fillMaxWidth()) {
                                     repeat(7) { dayIndex ->
                                         val date = firstShown.plusDays((week * 7 + dayIndex).toLong())
-                                        val dayTasks = viewModel.items.filter { it.appearsOn(date.toEpochDay()) }
+                                        // Dots only count one-off tasks; daily tasks are on every day so they'd mark them all.
+                                        val dotTasks = viewModel.items.filter { it.appearsOn(date.toEpochDay()) && !it.repeatDaily }
                                         DayCell(
                                             date = date,
                                             isSelected = date == selected,
                                             isToday = date == today,
                                             inCurrentMonth = !expanded || YearMonth.from(date) == month,
-                                            hasTasks = dayTasks.isNotEmpty(),
-                                            allDone = dayTasks.all { it.isDoneOn(date.toEpochDay()) },
+                                            hasTasks = dotTasks.isNotEmpty(),
+                                            allDone = dotTasks.all { it.isDoneOn(date.toEpochDay()) },
                                             onClick = { selectedEpochDay = date.toEpochDay() },
                                             modifier = Modifier.weight(1f),
                                         )
@@ -229,6 +230,7 @@ fun CalendarScreen(viewModel: TasksViewModel = viewModel()) {
 
         Button(
             onClick = { showAddDialog = true },
+            shape = RoundedCornerShape(12.dp), // matches the task cards
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         ) {
             Text(stringResource(R.string.checklist_add_task))

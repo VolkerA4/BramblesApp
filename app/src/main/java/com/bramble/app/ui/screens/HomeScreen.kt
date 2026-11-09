@@ -35,7 +35,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bramble.app.R
-import com.bramble.app.data.ChecklistItem
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -102,20 +101,28 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
         )
     }
 
-    val groups = groupByDay(viewModel.items, todayDay)
+    // Home only shows today: tasks dated today plus repeating tasks. Other days live on the Calendar tab.
+    val todaysTasks = viewModel.items.filter { it.appearsOn(todayDay) }
 
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize()) {
-            // Top half of the screen: the mascot. Fit scales it to fill the space without cropping.
-            Image(
-                painter = painterResource(R.drawable.raccoon),
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxWidth().weight(1f).padding(16.dp),
-            )
+        // The whole page is one scrolling list. The menu button (in BrambleApp) and the mood
+        // button below sit outside it, so they stay pinned in the top corners.
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            // The mascot fills the top half of the screen before you scroll. Fit scales it without cropping.
+            item {
+                Image(
+                    painter = painterResource(R.drawable.raccoon),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxWidth().fillParentMaxHeight(0.5f).padding(vertical = 8.dp),
+                )
+            }
 
-            // Bottom half: the checklist.
-            Column(Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp)) {
+            item {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         today.format(DateTimeFormatter.ofPattern("EEEE, MMMM d")),
@@ -124,44 +131,30 @@ fun HomeScreen(viewModel: TasksViewModel = viewModel()) {
                     )
                     SpoonCounter(left = summary.left, budget = summary.budget, onClick = { showBudgetDialog = true })
                 }
-                if (takeItEasy) {
+            }
+            if (takeItEasy) {
+                item {
                     Text(
                         stringResource(R.string.take_it_easy_banner),
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
+            }
 
-                // The list takes all spare room so the button stays pinned under it.
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    groups.forEach { (day, tasks) ->
-                        // Today's tasks sit right under the date, so only other days need a header.
-                        if (day != todayDay) {
-                            item(key = "day-$day") {
-                                Text(
-                                    dayLabel(day, todayDay),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    modifier = Modifier.padding(top = 4.dp),
-                                )
-                            }
-                        }
-                        items(tasks, key = { it.id }) { task ->
-                            ChecklistRow(
-                                item = task,
-                                day = day,
-                                onToggle = { handleToggle(task, day) },
-                                onDelete = { viewModel.remove(task) },
-                            )
-                        }
-                    }
-                }
+            items(todaysTasks, key = { it.id }) { task ->
+                ChecklistRow(
+                    item = task,
+                    day = todayDay,
+                    onToggle = { handleToggle(task, todayDay) },
+                    onDelete = { viewModel.remove(task) },
+                )
+            }
 
+            item {
                 Button(
                     onClick = { showAddDialog = true },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    shape = RoundedCornerShape(12.dp), // matches the task cards
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.checklist_add_task))
                 }
@@ -192,16 +185,4 @@ private fun SpoonCounter(left: Int, budget: Int, onClick: () -> Unit) {
             Text(stringResource(R.string.spoons_label), style = MaterialTheme.typography.labelSmall)
         }
     }
-}
-
-/**
- * Groups tasks by the day they belong to: today first, then upcoming days soonest-first,
- * then earlier days most-recent-first. A repeating task that started in the past is listed
- * under today only, since it would otherwise appear on every day.
- */
-private fun groupByDay(items: List<ChecklistItem>, today: Long): List<Pair<Long, List<ChecklistItem>>> {
-    val groups = items.groupBy { if (it.repeatDaily) maxOf(it.startDay, today) else it.startDay }
-    val upcoming = groups.keys.filter { it > today }.sorted()
-    val earlier = groups.keys.filter { it < today }.sortedDescending()
-    return (listOfNotNull(today.takeIf { it in groups }) + upcoming + earlier).map { it to groups.getValue(it) }
 }

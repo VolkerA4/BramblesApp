@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 
 // The Bramble palette: every color in the app comes from these eight.
-val SageGreen = Color(0xFFC3C88C)
+val SageGreen = Color(0xFF91B66B)
 val DeepGreen = Color(0xFF2E4A38)
 val DarkPurple = Color(0xFF30253E)
 val MidnightViolet = Color(0xFF241D37)
@@ -23,7 +23,7 @@ val BerryRose = Color(0xFF9A3B4A)
 val BlushPink = Color(0xFFFFD9DC)
 
 // Neutrals derived from the palette
-private val SageTint = lerp(SageGreen, Color.White, 0.8f)
+private val SageTint = Color(0xFFD1EFA6)
 private val SageSoft = lerp(SageGreen, Color.White, 0.55f)
 private val GreenBlack = lerp(DeepGreen, Color.Black, 0.6f)
 private val GreenSurface = lerp(DeepGreen, Color.Black, 0.45f)

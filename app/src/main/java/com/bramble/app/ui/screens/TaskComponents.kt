@@ -2,7 +2,12 @@ package com.bramble.app.ui.screens
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -59,7 +64,7 @@ private fun difficultyLabel(spoonCost: Int): Int = when (spoonCost) {
     else -> R.string.difficulty_hard
 }
 
-/** Small pill showing how much energy a task takes: Easy (1 spoon), Med (2), Hard (3). */
+/** Small pill showing how much energy a task takes: I (1 spoon, easy), II (2, medium), III (3, hard). */
 @Composable
 fun DifficultyTag(spoonCost: Int, modifier: Modifier = Modifier) {
     val color = when (spoonCost) {
@@ -84,7 +89,7 @@ fun DifficultyTag(spoonCost: Int, modifier: Modifier = Modifier) {
 /**
  * A white rounded card for one task, checked or unchecked for the given [day].
  * The checkbox toggles it; tapping anywhere else on the card opens a menu of actions.
- * The Easy/Med/Hard tag sits at the end of the card.
+ * The I/II/III difficulty tag sits at the end of the card.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,11 +101,11 @@ fun ChecklistRow(item: ChecklistItem, day: Long, onToggle: () -> Unit, onDelete:
         Surface(
             onClick = { menuOpen = true },
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 16.dp)) {
-                Checkbox(checked = done, onCheckedChange = { onToggle() })
+                TaskCheckbox(checked = done, onToggle = onToggle)
                 Column(Modifier.weight(1f)) {
                     Text(
                         item.text,
@@ -131,6 +136,39 @@ fun ChecklistRow(item: ChecklistItem, day: Long, onToggle: () -> Unit, onDelete:
                     menuOpen = false
                     onDelete()
                 },
+            )
+        }
+    }
+}
+
+/**
+ * A checkbox that always looks checked (filled green with a checkmark). Whether the task is done
+ * is shown by the crossed-out text instead, so tapping the box never changes how it looks.
+ * [checked] still drives the real state for screen readers.
+ */
+@Composable
+private fun TaskCheckbox(checked: Boolean, onToggle: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(5.dp)
+    // 48dp is the minimum comfortable touch target; the visible box inside is 22dp.
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .toggleable(value = checked, role = Role.Checkbox, onValueChange = { onToggle() }),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(22.dp)
+                .clip(shape)
+                .background(colors.primary, shape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painterResource(R.drawable.ic_check),
+                contentDescription = null,
+                tint = colors.onPrimary,
+                modifier = Modifier.size(16.dp),
             )
         }
     }
